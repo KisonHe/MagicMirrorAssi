@@ -1,3 +1,14 @@
+/**
+ * @file keyPressEmulator.cpp
+ * @author kisonhe
+ * @brief 
+ * @version 0.1
+ * @date 2020-12-16
+ * 
+ * @copyright Copyright (c) 2020
+ * 
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -67,17 +78,16 @@ int keyPressEmulator::_initPin(){
  * @return int 
  */
 int keyPressEmulator::doPress(){
-    //[TODO]
     if (lock)
         return -1;
     lock = true;
     _initPin();
     ESP_LOGI(TAG,"Press!");
     gpio_set_level((gpio_num_t)gpioNum,isHigh2Press);
-    vTaskDelay(100);    //simulate the press
+    vTaskDelay(pdMS_TO_TICKS(100));    //simulate the press
     gpio_set_level((gpio_num_t)gpioNum,(!isHigh2Press));
     ESP_LOGI(TAG,"Release!");
-    vTaskDelay(50);    //optional, some board require some delay
+    vTaskDelay(pdMS_TO_TICKS(100));    //optional, some board require some delay
     _deinitPin();
 
     lock = false;
@@ -92,6 +102,4 @@ keyPressEmulator::keyPressEmulator(int gpioNum_, int isHigh2Press_)
     _deinitPin();
 }
 
-keyPressEmulator::~keyPressEmulator()
-{
-}
+

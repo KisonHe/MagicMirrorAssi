@@ -26,7 +26,7 @@ private:
 public:
     int doPress();
     keyPressEmulator(int gpioNum_, int isHigh2Press_);
-    ~keyPressEmulator();
+    // ~keyPressEmulator();
 };
 
 
