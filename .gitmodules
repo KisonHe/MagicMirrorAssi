@@ -1,0 +1,3 @@
+[submodule "esp32/MagicMirrorESP32/components/app_uart"]
+	path = esp32/MagicMirrorESP32/components/app_uart
+	url = https://github.com/KisonHe/app_uart

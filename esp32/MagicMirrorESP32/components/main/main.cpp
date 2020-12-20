@@ -17,8 +17,7 @@
 #include "esp_task_wdt.h"
 #include "driver/gpio.h"
 
-#include "screenChecker.h"
-#include "keyPressEmulator.h"
+
 #include "main.h"
 
 #define TAG "app_main"
@@ -27,7 +26,7 @@
 #define TOUCH_GPIO_NUM ((gpio_num_t)33)
 #define ESP_INTR_FLAG_DEFAULT 0
 
-keyPressEmulator PowerKey(18, 0);
+// keyPressEmulator PowerKey(18, 0);
 SemaphoreHandle_t KeepScreenOn = nullptr;
 
 TaskHandle_t MainTaskHandle = nullptr;
@@ -46,7 +45,7 @@ void ScreenCtrTask(void *pvParameters)
             if (ScreenChecker::SCStatus.isTurnedOn)
             {
                ESP_LOGD(TAG,"Doing Press!");
-               PowerKey.doPress();
+               // PowerKey.doPress();
                vTaskDelay(pdMS_TO_TICKS(500));  //wait 500ms before nextCheck
             }
             else
@@ -71,7 +70,7 @@ void ScreenCtrTask(void *pvParameters)
                // } else
                // {
                   ESP_LOGD(TAG,"Doing Press!");
-                  PowerKey.doPress();
+                  // PowerKey.doPress();
                   vTaskDelay(pdMS_TO_TICKS(500));  //wait 500ms before nextCheck
                // }       
             }
