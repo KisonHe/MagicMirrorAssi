@@ -18,7 +18,7 @@ namespace ScreenChecker
 {
     struct SCStatus_
     {
-        bool isPowered;
+        // bool isPowered;
         bool isTurnedOn;
     };
     extern SCStatus_ SCStatus; 

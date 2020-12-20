@@ -14,9 +14,17 @@ def send(parameter_list):
     pass
 
 if (__name__ == "__main__"):
-    ser = serial.Serial("/dev/ttyS0")
+    # ser = serial.Serial("/dev/ttyS0")
+    ser = serial.Serial("/dev/ttyUSB0")
     ser.baudrate = 115200
+    ser.timeout = 5
+    ser.close()
     ser.open()
+    while (1):
+        s = ser.read(100)
+        print(type(s))
+
+    
     # if (not ser.is_open):
         
 

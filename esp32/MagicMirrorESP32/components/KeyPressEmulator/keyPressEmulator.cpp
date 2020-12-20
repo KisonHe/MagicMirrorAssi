@@ -82,11 +82,11 @@ int keyPressEmulator::doPress(){
         return -1;
     lock = true;
     _initPin();
-    ESP_LOGI(TAG,"Press!");
+    ESP_LOGD(TAG,"Press!");
     gpio_set_level((gpio_num_t)gpioNum,isHigh2Press);
     vTaskDelay(pdMS_TO_TICKS(100));    //simulate the press
     gpio_set_level((gpio_num_t)gpioNum,(!isHigh2Press));
-    ESP_LOGI(TAG,"Release!");
+    ESP_LOGD(TAG,"Release!");
     vTaskDelay(pdMS_TO_TICKS(100));    //optional, some board require some delay
     _deinitPin();
 

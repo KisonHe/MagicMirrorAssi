@@ -34,8 +34,8 @@ static uint32_t adc_REDvoltage = 0;
 static uint32_t adc_GREENvoltage = 0;
 
 //random channel
-static adc1_channel_t REDchannel = (adc1_channel_t)ADC_CHANNEL_6;   //GPIO34 if ADC1, GPIO14 if ADC2
-static adc1_channel_t GREENchannel = (adc1_channel_t)ADC_CHANNEL_6; //GPIO34 if ADC1, GPIO14 if ADC2
+static adc1_channel_t REDchannel = (adc1_channel_t)ADC_CHANNEL_6;   //GPIO34
+static adc1_channel_t GREENchannel = (adc1_channel_t)ADC_CHANNEL_7; //GPIO35
 
 namespace ScreenChecker
 {
@@ -56,24 +56,24 @@ namespace ScreenChecker
         adc_GREENreading /= NO_OF_SAMPLES;
         adc_REDvoltage = esp_adc_cal_raw_to_voltage(adc_REDreading, adc_chars);
         adc_GREENvoltage = esp_adc_cal_raw_to_voltage(adc_GREENreading, adc_chars);
-        ESP_LOGI(TAG,"Red V=%d",adc_REDvoltage);
-        ESP_LOGI(TAG,"GREEN V=%d",adc_GREENvoltage);
+        ESP_LOGV(TAG,"Red V=%d",adc_REDvoltage);
+        ESP_LOGV(TAG,"GREEN V=%d",adc_GREENvoltage);
         if (adc_REDvoltage < threshold && adc_GREENvoltage < threshold){
-            SCStatus.isPowered = false;
+            // SCStatus.isPowered = false;
             SCStatus.isTurnedOn = false;
         }
         else if (adc_REDvoltage >= threshold && adc_GREENvoltage >= threshold)
         {
             ESP_LOGW(TAG,"Both LED are on! Adjust your threshold!");
         }
-        else if (adc_REDvoltage >= threshold)
-        {
-            SCStatus.isPowered = true;
-            SCStatus.isTurnedOn = false;
-        }
+        // else if (adc_REDvoltage >= threshold)
+        // {
+        //     // SCStatus.isPowered = true;
+        //     SCStatus.isTurnedOn = false;
+        // }
         else
         {
-            SCStatus.isPowered = true;
+            // SCStatus.isPowered = true;
             SCStatus.isTurnedOn = true;
         }
         
@@ -97,7 +97,7 @@ namespace ScreenChecker
 
         adc_chars = (esp_adc_cal_characteristics_t *)calloc(1, sizeof(esp_adc_cal_characteristics_t));
         esp_adc_cal_characterize((adc_unit_t)ADC_UNIT_1, (adc_atten_t)ADC_ATTEN_DB_0, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
-        xTimerStart(xTimerCreate("SC", pdMS_TO_TICKS(2), true, nullptr, [](TimerHandle_t tmr) { ScreenChecker::Routine(); }), pdMS_TO_TICKS(10));
+        xTimerStart(xTimerCreate("SC", pdMS_TO_TICKS(10), true, nullptr, [](TimerHandle_t tmr) { ScreenChecker::Routine(); }), pdMS_TO_TICKS(10));
 
         return 0;
     }
