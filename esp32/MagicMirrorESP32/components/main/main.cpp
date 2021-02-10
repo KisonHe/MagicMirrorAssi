@@ -6,6 +6,7 @@
    software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
    CONDITIONS OF ANY KIND, either express or implied.
 */
+#include <string.h>
 #include <stdio.h>
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
@@ -18,6 +19,7 @@
 #include "driver/gpio.h"
 
 
+#include "app_uart.h"
 #include "main.h"
 
 #define TAG "app_main"
@@ -27,9 +29,44 @@
 #define ESP_INTR_FLAG_DEFAULT 0
 
 // keyPressEmulator PowerKey(18, 0);
+comm::app_uart mainUart(UART_NUM_1, 10, 9);
 SemaphoreHandle_t KeepScreenOn = nullptr;
+SemaphoreHandle_t GotOpenRespond = nullptr;
+SemaphoreHandle_t GotCloseRespond = nullptr;
 
 TaskHandle_t MainTaskHandle = nullptr;
+
+
+int handlerOne(comm::app_uart::FW_ FW, comm::app_uart::SFW_ SFW, uint8_t* data, comm::app_uart* pt) {
+   switch (FW)
+   {
+   case comm::app_uart::FW_HB:
+      if (SFW == comm::app_uart::SFW_RESQUEST)
+      {
+         uint8_t tmpd[16];
+         bzero(tmpd,16);
+         pt->send(comm::app_uart::FW_HB,comm::app_uart::SFW_RESPOND,tmpd);
+      }
+      
+      break;
+   case comm::app_uart::FW_OPEN:
+   if (SFW == comm::app_uart::SFW_RESPOND){
+      xSemaphoreGive(GotOpenRespond);
+   }
+   break;
+
+   case comm::app_uart::FW_CLOSE:
+   if (SFW == comm::app_uart::SFW_RESPOND){
+      xSemaphoreGive(GotCloseRespond);
+   }
+   break;
+   
+   default:
+   return -1;//FW not found
+      break;
+   }
+   return 0;
+}
 
 void ScreenCtrTask(void *pvParameters)
 {
@@ -42,43 +79,28 @@ void ScreenCtrTask(void *pvParameters)
          ESP_LOGD(TAG,"Closing!");
          for (int tryNum = 0; tryNum < 25; tryNum++) //try 25 times see if we can close screen nicely :)
          {
-            if (ScreenChecker::SCStatus.isTurnedOn)
-            {
-               ESP_LOGD(TAG,"Doing Press!");
-               // PowerKey.doPress();
-               vTaskDelay(pdMS_TO_TICKS(500));  //wait 500ms before nextCheck
-            }
-            else
-            {
-               ESP_LOGD(TAG,"Already Closed!");
-               break;
-            }
+               uint8_t tmp[18];
+               bzero(tmp,18);
+               mainUart.send(comm::app_uart::FW_OPEN,comm::app_uart::SFW_RESQUEST,tmp);
+               if (xSemaphoreTake(GotOpenRespond,pdMS_TO_TICKS(500)) == pdTRUE){
+                  break;
+               }
+               if (tryNum>=24) ESP_LOGW(TAG,"Fail to get any respond from pi!");
          }
       }
       else
       {
          ESP_LOGD(TAG,"Got Semaphore!");
          //try to open the monitor!
-         for (int tryNum = 0; tryNum < 25; tryNum++) //try 25 times see if we can open screen nicely :)
+         for (int tryNum = 0; tryNum < 25; tryNum++) //try 25 times see if we can close screen nicely :)
          {
-            if (!ScreenChecker::SCStatus.isTurnedOn)
-            {
-               // if (!ScreenChecker::SCStatus.isPowered){
-               //    ESP_LOGW(TAG,"Screen is not powered!");
-               //    break;
-               //    //[todo] Remind User to turn the power on
-               // } else
-               // {
-                  ESP_LOGD(TAG,"Doing Press!");
-                  // PowerKey.doPress();
-                  vTaskDelay(pdMS_TO_TICKS(500));  //wait 500ms before nextCheck
-               // }       
-            }
-            else
-            {
-               ESP_LOGW(TAG,"Already On!");
-               break;
-            } 
+               uint8_t tmp[18];
+               bzero(tmp,18);
+               mainUart.send(comm::app_uart::FW_CLOSE,comm::app_uart::SFW_RESQUEST,tmp);
+               if (xSemaphoreTake(GotCloseRespond,pdMS_TO_TICKS(500)) == pdTRUE){
+                  break;
+               }
+               if (tryNum>=24) ESP_LOGW(TAG,"Fail to get any respond from pi!");
          }
       }
       
@@ -122,6 +144,10 @@ void app_main(void)
    io_conf.pull_down_en = (gpio_pulldown_t)1;
    gpio_config(&io_conf);
 
+   KeepScreenOn = xSemaphoreCreateBinary();
+   GotOpenRespond = xSemaphoreCreateBinary();
+   GotCloseRespond = xSemaphoreCreateBinary();
+
    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     //hook isr handler for specific gpio pin
    gpio_isr_handler_add(TOUCH_GPIO_NUM, [](void *){
@@ -130,11 +156,14 @@ void app_main(void)
       //ESP_LOGI(TAG,"Touch signal got!"); //Use ESP_LOG in isr will make you boom!!
       }, nullptr);
 
-   KeepScreenOn = xSemaphoreCreateBinary();
-   if (KeepScreenOn == nullptr){
+   if (KeepScreenOn == nullptr || GotOpenRespond == nullptr || GotCloseRespond == nullptr){
       ESP_LOGE(TAG,"Failed to create Semaphore!");
    }
-   ScreenChecker::init();
+
+   mainUart.handler=handlerOne;
+   mainUart.init();
+
+   // ScreenChecker::init();
    // example of rtos used this api not xTaskCreate
    // maybe we should use this too?
    xTaskCreatePinnedToCore(MainTask,
@@ -153,4 +182,12 @@ void app_main(void)
                            6,
                            nullptr,
                            tskNO_AFFINITY);
+   // while (1)
+   // {
+   //    uint8_t tmp[18];
+   //    bzero(tmp,18);
+   //    mainUart.send(comm::app_uart::FW_CLOSE,comm::app_uart::SFW_RESQUEST,tmp);
+   //    vTaskDelay(10);
+   // }
+   
 }
