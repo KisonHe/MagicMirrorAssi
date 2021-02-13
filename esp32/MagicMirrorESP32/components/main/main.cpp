@@ -74,15 +74,14 @@ void ScreenCtrTask(void *pvParameters)
    {
       if (xSemaphoreTake(KeepScreenOn, pdMS_TO_TICKS(45000)) != pdTRUE) //try 45s if can recieve Semaphore
       {
-         ESP_LOGD(TAG,"Semaphore Time Out!");
+         ESP_LOGD(TAG,"Semaphore Time Out!,Closing!");
          //time to close the screen!
-         ESP_LOGD(TAG,"Closing!");
          for (int tryNum = 0; tryNum < 25; tryNum++) //try 25 times see if we can close screen nicely :)
          {
                uint8_t tmp[18];
                bzero(tmp,18);
-               mainUart.send(comm::app_uart::FW_OPEN,comm::app_uart::SFW_RESQUEST,tmp);
-               if (xSemaphoreTake(GotOpenRespond,pdMS_TO_TICKS(500)) == pdTRUE){
+               mainUart.send(comm::app_uart::FW_CLOSE,comm::app_uart::SFW_RESQUEST,tmp);
+               if (xSemaphoreTake(GotCloseRespond,pdMS_TO_TICKS(500)) == pdTRUE){
                   break;
                }
                if (tryNum>=24) ESP_LOGW(TAG,"Fail to get any respond from pi!");
@@ -90,14 +89,14 @@ void ScreenCtrTask(void *pvParameters)
       }
       else
       {
-         ESP_LOGD(TAG,"Got Semaphore!");
+         ESP_LOGD(TAG,"Got Open Semaphore!");
          //try to open the monitor!
          for (int tryNum = 0; tryNum < 25; tryNum++) //try 25 times see if we can close screen nicely :)
          {
                uint8_t tmp[18];
                bzero(tmp,18);
-               mainUart.send(comm::app_uart::FW_CLOSE,comm::app_uart::SFW_RESQUEST,tmp);
-               if (xSemaphoreTake(GotCloseRespond,pdMS_TO_TICKS(500)) == pdTRUE){
+               mainUart.send(comm::app_uart::FW_OPEN,comm::app_uart::SFW_RESQUEST,tmp);
+               if (xSemaphoreTake(GotOpenRespond,pdMS_TO_TICKS(500)) == pdTRUE){
                   break;
                }
                if (tryNum>=24) ESP_LOGW(TAG,"Fail to get any respond from pi!");
