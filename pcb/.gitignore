@@ -26,3 +26,9 @@ fp-info-cache
 # Exported BOM files
 *.xml
 *.csv
+
+# plot
+plot
+*.gbr
+*.drl
+*.gbrjob
