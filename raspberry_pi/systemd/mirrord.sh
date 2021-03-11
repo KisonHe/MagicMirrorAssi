@@ -11,7 +11,7 @@ export DISPLAY=:0 #change this to auto detect later
 # [TODO]
 
 # shutdown gracely, in case schools cuts power.
-# shutdown -h 23:00
+shutdown -h 23:00
 
 # https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
 # vcgencmd display_power 0 # turn off 

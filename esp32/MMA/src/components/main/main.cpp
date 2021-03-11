@@ -120,7 +120,7 @@ void MainTask(void *pvParameters)
 }
 
 void app_main(void)
-{
+{ 
    //init
    gpio_config_t io_conf;
    //no interrupt
